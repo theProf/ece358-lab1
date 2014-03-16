@@ -33,7 +33,7 @@ public:
 //	EventList	*arrivals;
 //	EventList	*observers;
 
-	std::list<Event>	el;
+	std::list<Event>	*el;
 
 	/* global vars */
 	int			Na;
@@ -57,6 +57,7 @@ public:
 private:
 	void		populateArrivals(void);
 	void		populateObservers(void);
+	void		calc_departures(void);
 
 	float 		Uniform(void);
 	float 		Exponential(float lambda);
