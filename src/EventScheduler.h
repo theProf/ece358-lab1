@@ -17,14 +17,14 @@
 class EventScheduler {
 public:
 	EventScheduler();
-	EventScheduler(float pRo, int pL, int pC);
-	EventScheduler(float pRo, int pL, int pC, int pK);
+	EventScheduler(double pRo, int pL, int pC);
+	EventScheduler(double pRo, int pL, int pC, int pK);
 	virtual ~EventScheduler();
 
 	/* Initialization Parameters */
-	float 		lambda;
-	float		alpha;
-	float		Ro;
+	double 		lambda;
+	double		alpha;
+	double		Ro;
 	int			L;
 	int			C;
 	int			K;
@@ -42,7 +42,7 @@ public:
 	int			No;
 	int			Ndr;
 	int			En;
-	float		Et;
+	double		Et;
 	int			idle;
 
 	/* step functions */
@@ -57,6 +57,8 @@ private:
 	void		populateArrivals(void);
 	void		populateObservers(void);
 	void		calc_departures(void);
+	void		insert_sort(Event *event);
+	Event		*nextEvent(void);
 };
 
 

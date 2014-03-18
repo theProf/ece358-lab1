@@ -17,13 +17,13 @@ typedef enum {
 
 class Event {
 public:
-	float 		time;
+	double 		time;
 	int 		length;
 	EventType 	type;
 //	Event 		*next;s
 
 	Event();
-	Event(float pTime, EventType pType);
+	Event(double pTime, EventType pType);
 	virtual 	~Event();
 
 	void 		toString(void);

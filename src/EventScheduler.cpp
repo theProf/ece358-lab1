@@ -10,7 +10,10 @@
 #define TIME 				10000 	// secs
 
 bool comparator(Event *one, Event *two) {
-	return one->time < two->time;
+//	if(one->time == two->time && (one->type == DEPARTING && two->type == ARRIVING) || (two->type == DEPARTING && one->type == ARRIVING) ) {
+//		int x = 0; // breakpoint
+//	}
+	return one->time <= two->time;
 }
 
 EventScheduler::EventScheduler() {
@@ -30,7 +33,7 @@ EventScheduler::EventScheduler() {
 	this->idle	= 0;
 }
 
-EventScheduler::EventScheduler(float pRo, int pL, int pC) {
+EventScheduler::EventScheduler(double pRo, int pL, int pC) {
 	this->Ro 	= pRo;
 	this->lambda = pRo*pC/pL;
 	this->alpha = this->lambda;
@@ -47,7 +50,7 @@ EventScheduler::EventScheduler(float pRo, int pL, int pC) {
 	this->idle	= 0;
 }
 
-EventScheduler::EventScheduler(float pRo, int pL, int pC, int pK) {
+EventScheduler::EventScheduler(double pRo, int pL, int pC, int pK) {
 	this->Ro 	= pRo;
 	this->lambda = pRo*pC/pL;
 	this->alpha = this->lambda;
@@ -79,9 +82,6 @@ void EventScheduler::setup() {
 	populateObservers();
 
 	sortES();
-
-	calc_departures();
-	sortES();
 	return;
 }
 
@@ -89,38 +89,36 @@ void EventScheduler::sortES() {
 	el->sort(comparator);
 }
 
-void EventScheduler::calc_departures() {
-	float last_departure = 0;
-	for(std::list<Event*>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
-		if((*cur_event)->type != ARRIVING ) {
-			continue;
-		}
-
-		// take into account buffer delay
-		float Td;
-		Td = (last_departure > (*cur_event)->time
-					? last_departure
-					: (*cur_event)->time)
-				+ ((float)(*cur_event)->length / (float)C);
-
-		if(Td < TIME) {
-			el->push_front(new Event(Td, DEPARTING));
-			last_departure = Td;
-			Et += Td - (*cur_event)->time;
-		}
-	}
+Event *EventScheduler::nextEvent() {
+	Event *e = el->front();
+	el->pop_front();
+	return e;
 }
 
 void EventScheduler::run() {
-	float last_departure = 0;
-	for(std::list<Event*>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
-//		Event cur_event = *(ce);
-		switch ((*cur_event)->type) {
+	double last_departure = 0;
+	Event *cur_event = NULL;
+	while(!el->empty()) {
+		cur_event = nextEvent();
+
+		switch (cur_event->type) {
 			case ARRIVING:
-//				if(K != -1 && Na - Nd >= K) {
-//					++Ndr;
-//					continue;
-//				}
+				if(K > 0 && Na - Nd >= K) {
+					++Ndr;
+					continue;
+				}
+
+				double Td;
+				Td = (last_departure > cur_event->time
+									? last_departure
+									: cur_event->time)
+								+ ((double)cur_event->length / (double)C);
+
+				if(Td < TIME) {
+					insert_sort(new Event(Td, DEPARTING));
+					last_departure = Td;
+					Et += Td - cur_event->time;
+				}
 
 				++Na;
 
@@ -133,24 +131,30 @@ void EventScheduler::run() {
 				++No;
 
 				idle = Na == Nd ? ++idle : idle;
+				if(Na - Nd < 0 ) {
+					int x = 0; // breakpoint
 
+				}
 				En += Na - Nd;
 				break;
 			default:
 				break;
 		}
+
+		delete cur_event;
+		cur_event = nextEvent();
 	}
 
-	printf("ro: %f\t| lambda: %f\t| E[N]: %f\t| E[T]: %f\t| Pidle: %f\n", this->Ro, this->lambda, (float)En/(float)No, (float)Et/(float)Nd, (float)idle/(float)No);
+	printf("ro: %f\t| lambda: %f\t| E[N]: %f\t| E[T]: %f\t| Pidle: %f\n", this->Ro, this->lambda, (double)En/(double)No, (double)Et/(double)Nd, (double)idle/(double)No);
 }
 
 void EventScheduler::populateArrivals() {
 	Event *e = NULL;
-	float time = 0;
+	double time = 0;
 	time += RandomVar::Exponential(lambda);
 	while ( time < TIME ) {
 		e = new Event(time, ARRIVING);
-		e->length = (int)RandomVar::Exponential(1.0 / (float)L);
+		e->length = (int)RandomVar::Exponential(1.0 / (double)L);
 		el->push_back(e);
 		time += RandomVar::Exponential(lambda);
 	}
@@ -159,7 +163,7 @@ void EventScheduler::populateArrivals() {
 
 void EventScheduler::populateObservers() {
 	Event *e = NULL;
-	float time = 0;
+	double time = 0;
 	time += RandomVar::Exponential(alpha);
 	while( time < TIME) {
 		e = new Event(time, OBSERVING);
@@ -167,3 +171,15 @@ void EventScheduler::populateObservers() {
 		time += RandomVar::Exponential(alpha);
 	}
 }
+
+void EventScheduler::insert_sort(Event *event) {
+	for(std::list<Event*>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
+		if(event->time > (*cur_event)->time) {
+			el->insert(cur_event, event);
+			return;
+		}
+		++cur_event;
+	}
+	el->push_back(event);
+}
+

@@ -7,26 +7,26 @@
 
 #include "RandomVar.h"
 
-float RandomVar::Uniform() {
-	return (float)rand()/(float)(RAND_MAX);
+double RandomVar::Uniform() {
+	return (double)rand()/(double)(RAND_MAX);
 }
 
 /*
  * Exponential
  */
-float RandomVar::Exponential(float lambda) {
-	return -(float)log(Uniform())/lambda;
+double RandomVar::Exponential(double lambda) {
+	return -(double)log(Uniform())/lambda;
 }
 
 /*
  * Poisson:
  */
-int RandomVar::Poisson(float mean) { //Special technique required: Box-Muller method...
-	float R;
-	float sum = 0;
+int RandomVar::Poisson(double mean) { //Special technique required: Box-Muller method...
+	double R;
+	double sum = 0;
 	int i;
 	i=-1;
-	float z;
+	double z;
 
 	while(sum <=mean)
 	{
@@ -39,10 +39,10 @@ int RandomVar::Poisson(float mean) { //Special technique required: Box-Muller me
 	return i;
 }
 
-float RandomVar::Poisson2(float mean) {
-	float l = exp(-mean);
+double RandomVar::Poisson2(double mean) {
+	double l = exp(-mean);
 	int k = 0;
-	float p = 1.0;
+	double p = 1.0;
 	do {
 		p = p * Uniform();
 		++k;

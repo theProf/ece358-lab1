@@ -14,7 +14,7 @@ Event::Event() {
 //	this->next = NULL;
 }
 
-Event::Event(float pTime, EventType pType) {
+Event::Event(double pTime, EventType pType) {
 	this->time = pTime;
 	this->type = pType;
 	this->length = 0;

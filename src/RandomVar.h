@@ -13,10 +13,10 @@
 
 class RandomVar {
 public:
-	static float Uniform(void);
-	static float Exponential(float lambda);
-	static int Poisson(float mean);
-	static float Poisson2(float mean);
+	static double Uniform(void);
+	static double Exponential(double lambda);
+	static int Poisson(double mean);
+	static double Poisson2(double mean);
 };
 
 
