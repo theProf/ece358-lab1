@@ -9,18 +9,18 @@
 
 #define TIME 				10000 	// secs
 
-bool comparator(Event one, Event two) {
-	return one.time < two.time;
+bool comparator(Event *one, Event *two) {
+	return one->time < two->time;
 }
 
 EventScheduler::EventScheduler() {
-	this->Ro = 0;
+	this->Ro 	= 0;
 	this->lambda = 0;
 	this->alpha = this->lambda;
-	this->L = 0;
-	this->C = 0;
-	this->K = -1;
-	el	= new std::list<Event>();
+	this->L 	= 0;
+	this->C 	= 0;
+	this->K 	= -1;
+	this->el	= new std::list<Event *>();
 	this->Na	= 0;
 	this->Nd	= 0;
 	this->No	= 0;
@@ -31,13 +31,13 @@ EventScheduler::EventScheduler() {
 }
 
 EventScheduler::EventScheduler(float pRo, int pL, int pC) {
-	this->Ro = pRo;
+	this->Ro 	= pRo;
 	this->lambda = pRo*pC/pL;
 	this->alpha = this->lambda;
-	this->L = pL;
-	this->C = pC;
-	this->K = -1;
-	el	= new std::list<Event>();
+	this->L 	= pL;
+	this->C 	= pC;
+	this->K 	= -1;
+	this->el	= new std::list<Event*>();
 	this->Na	= 0;
 	this->Nd	= 0;
 	this->No	= 0;
@@ -48,13 +48,13 @@ EventScheduler::EventScheduler(float pRo, int pL, int pC) {
 }
 
 EventScheduler::EventScheduler(float pRo, int pL, int pC, int pK) {
-	this->Ro = pRo;
+	this->Ro 	= pRo;
 	this->lambda = pRo*pC/pL;
 	this->alpha = this->lambda;
-	this->L = pL;
-	this->C = pC;
-	this->K = pK;
-	el	= new std::list<Event>();
+	this->L 	= pL;
+	this->C 	= pC;
+	this->K 	= pK;
+	this->el	= new std::list<Event*>();
 	this->Na	= 0;
 	this->Nd	= 0;
 	this->No	= 0;
@@ -64,7 +64,13 @@ EventScheduler::EventScheduler(float pRo, int pL, int pC, int pK) {
 	this->idle	= 0;
 }
 
+bool deleteAll(Event *e) {
+	delete e;
+	return true;
+}
+
 EventScheduler::~EventScheduler() {
+	this->el->remove_if(deleteAll);
 	delete el;
 }
 
@@ -85,31 +91,31 @@ void EventScheduler::sortES() {
 
 void EventScheduler::calc_departures() {
 	float last_departure = 0;
-	for(std::list<Event>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
-		if(cur_event->type != ARRIVING ) {
+	for(std::list<Event*>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
+		if((*cur_event)->type != ARRIVING ) {
 			continue;
 		}
 
 		// take into account buffer delay
 		float Td;
-		Td = (last_departure > cur_event->time
+		Td = (last_departure > (*cur_event)->time
 					? last_departure
-					: cur_event->time)
-				+ ((float)cur_event->length / (float)C);
+					: (*cur_event)->time)
+				+ ((float)(*cur_event)->length / (float)C);
 
 		if(Td < TIME) {
-			el->push_front(*(new Event(Td, DEPARTING)));
+			el->push_front(new Event(Td, DEPARTING));
 			last_departure = Td;
-			Et += Td - cur_event->time;
+			Et += Td - (*cur_event)->time;
 		}
 	}
 }
 
 void EventScheduler::run() {
 	float last_departure = 0;
-	for(std::list<Event>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
+	for(std::list<Event*>::iterator cur_event = el->begin(); cur_event != el->end(); ++cur_event) {
 //		Event cur_event = *(ce);
-		switch (cur_event->type) {
+		switch ((*cur_event)->type) {
 			case ARRIVING:
 //				if(K != -1 && Na - Nd >= K) {
 //					++Ndr;
@@ -141,12 +147,12 @@ void EventScheduler::run() {
 void EventScheduler::populateArrivals() {
 	Event *e = NULL;
 	float time = 0;
-	time += Exponential(lambda);
+	time += RandomVar::Exponential(lambda);
 	while ( time < TIME ) {
 		e = new Event(time, ARRIVING);
-		e->length = (int)Exponential(1.0 / (float)L);
-		el->push_back(*e);
-		time += Exponential(lambda);
+		e->length = (int)RandomVar::Exponential(1.0 / (float)L);
+		el->push_back(e);
+		time += RandomVar::Exponential(lambda);
 	}
 
 }
@@ -154,53 +160,10 @@ void EventScheduler::populateArrivals() {
 void EventScheduler::populateObservers() {
 	Event *e = NULL;
 	float time = 0;
-	time += Exponential(alpha);
+	time += RandomVar::Exponential(alpha);
 	while( time < TIME) {
 		e = new Event(time, OBSERVING);
-		el->push_back(*e);
-		time += Exponential(alpha);
+		el->push_back(e);
+		time += RandomVar::Exponential(alpha);
 	}
-}
-
-float EventScheduler::Uniform() {
-	return (float)rand()/(float)(RAND_MAX);
-}
-
-/*
- * Exponential
- */
-float EventScheduler::Exponential(float lambda) {
-	return -(float)log(Uniform())/lambda;
-}
-
-/*
- * Poisson:
- */
-int EventScheduler::Poisson(float mean) { //Special technique required: Box-Muller method...
-	float R;
-	float sum = 0;
-	int i;
-	i=-1;
-	float z;
-
-	while(sum <=mean)
-	{
-
-				R = Uniform();
-				z = log(R);
-				sum+= z;
-				i++;
-	}
-	return i;
-}
-
-float EventScheduler::Poisson2(float mean) {
-	float l = exp(-mean);
-	int k = 0;
-	float p = 1.0;
-	do {
-		p = p * Uniform();
-		++k;
-	} while (p > l);
-	return k - 1;
 }

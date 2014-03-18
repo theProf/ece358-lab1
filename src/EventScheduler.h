@@ -9,6 +9,7 @@
 #define EVENTSCHEDULER_H_
 
 #include "Event.h"
+#include "RandomVar.h"
 #include <cmath>
 #include <stdio.h>
 #include <list>
@@ -33,7 +34,7 @@ public:
 //	EventList	*arrivals;
 //	EventList	*observers;
 
-	std::list<Event>	*el;
+	std::list<Event*>	*el;
 
 	/* global vars */
 	int			Na;
@@ -52,17 +53,10 @@ public:
 	void		toString(void);
 	void		sortES(void);
 
-
-
 private:
 	void		populateArrivals(void);
 	void		populateObservers(void);
 	void		calc_departures(void);
-
-	float 		Uniform(void);
-	float 		Exponential(float lambda);
-	int 		Poisson(float lambda);
-	float 		Poisson2(float lambda);
 };
 
 

@@ -10,6 +10,7 @@
 #define MAIN_H_
 
 #include "EventScheduler.h"
+#include "RandomVar.h"
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
